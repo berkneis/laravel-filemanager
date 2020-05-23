@@ -41,7 +41,7 @@ class Lfm
     /**
      * Get only the file name.
      *
-     * @param  string  $path  Real path of a file.
+     * @param string $path Real path of a file.
      * @return string
      */
     public function getNameFromPath($path)
@@ -153,6 +153,16 @@ class Lfm
         return $this->config->get('lfm.folder_categories.' . $this->currentLfmType() . '.max_size');
     }
 
+    public function cloudIsEnabled()
+    {
+        return $this->config->get('lfm.cloud');
+    }
+
+    public function optimizerIsEnabled()
+    {
+        return $this->config->get('lfm.optimizer');
+    }
+
     public function getPaginationPerPage()
     {
         return $this->config->get("lfm.paginator.perPage", 30);
@@ -176,7 +186,7 @@ class Lfm
      */
     public function allowShareFolder()
     {
-        if (! $this->allowMultiUser()) {
+        if (!$this->allowMultiUser()) {
             return true;
         }
 
@@ -186,7 +196,7 @@ class Lfm
     /**
      * Translate file name to make it compatible on Windows.
      *
-     * @param  string  $input  Any string.
+     * @param string $input Any string.
      * @return string
      */
     public function translateFromUtf8($input)
@@ -226,8 +236,8 @@ class Lfm
     /**
      * Shorter function of getting localized error message..
      *
-     * @param  mixed  $error_type  Key of message in lang file.
-     * @param  mixed  $variables   Variables the message needs.
+     * @param mixed $error_type Key of message in lang file.
+     * @param mixed $variables Variables the message needs.
      * @return string
      */
     public function error($error_type, $variables = [])
@@ -242,7 +252,7 @@ class Lfm
      */
     public static function routes()
     {
-        $middleware = [ CreateDefaultFolder::class, MultiUser::class ];
+        $middleware = [CreateDefaultFolder::class, MultiUser::class];
         $as = 'unisharp.lfm.';
         $namespace = '\\UniSharp\\LaravelFilemanager\\Controllers\\';
 

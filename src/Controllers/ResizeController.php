@@ -2,6 +2,7 @@
 
 namespace UniSharp\LaravelFilemanager\Controllers;
 
+use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
 use UniSharp\LaravelFilemanager\Events\ImageIsResizing;
 use UniSharp\LaravelFilemanager\Events\ImageWasResized;
@@ -55,9 +56,13 @@ class ResizeController extends LfmController
     public function performResize()
     {
         $image_path = $this->lfm->setName(request('img'))->path('absolute');
+        $path = $this->lfm->setName(request('img'))->path();
 
         event(new ImageIsResizing($image_path));
-        Image::make($image_path)->resize(request('dataWidth'), request('dataHeight'))->save();
+        $image = Image::make($image_path)->resize(request('dataWidth'), request('dataHeight'))->save();
+        if ($this->helper->cloudIsEnabled()) {
+            Storage::cloud()->put($path, $image->encode());
+        }
         event(new ImageWasResized($image_path));
 
         return parent::$success_response;

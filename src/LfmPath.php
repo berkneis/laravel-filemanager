@@ -4,9 +4,11 @@ namespace UniSharp\LaravelFilemanager;
 
 use Illuminate\Container\Container;
 use Intervention\Image\Facades\Image;
+use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use UniSharp\LaravelFilemanager\Events\ImageIsUploading;
 use UniSharp\LaravelFilemanager\Events\ImageWasUploaded;
+use Illuminate\Support\Facades\Storage;
 
 class LfmPath
 {
@@ -131,7 +133,7 @@ class LfmPath
     /**
      * Create folder if not exist.
      *
-     * @param  string  $path  Real path of a directory.
+     * @param string $path Real path of a directory.
      * @return bool
      */
     public function createFolder()
@@ -158,7 +160,7 @@ class LfmPath
     /**
      * Check a folder and its subfolders is empty or not.
      *
-     * @param  string  $directory_path  Real path of a directory.
+     * @param string $directory_path Real path of a directory.
      * @return bool
      */
     public function directoryIsEmpty()
@@ -170,7 +172,7 @@ class LfmPath
     {
         $path = $this->working_dir
             ?: $this->helper->input('working_dir')
-            ?: $this->helper->getRootFolder();
+                ?: $this->helper->getRootFolder();
 
         if ($this->is_thumb) {
             // Prevent if working dir is "/" normalizeWorkingDir will add double "//" that breaks S3 functionality
@@ -188,7 +190,7 @@ class LfmPath
     /**
      * Sort files and directories.
      *
-     * @param  mixed  $arr_items  Array of files or folders or both.
+     * @param mixed $arr_items Array of files or folders or both.
      * @return array of object
      */
     public function sortByColumn($arr_items)
@@ -221,7 +223,18 @@ class LfmPath
 
         event(new ImageIsUploading($new_file_path));
         try {
+
+            if ($this->helper->currentLfmType() == 'image' && $this->helper->optimizerIsEnabled()) {
+                ImageOptimizer::optimize($file);
+            }
+
             $new_file_name = $this->saveFile($file, $new_file_name);
+
+            if ($this->helper->cloudIsEnabled()) {
+                $cleanPath = $this->storage->getCleanPath($file);
+                Storage::cloud()->putFileAs($cleanPath, $file, $new_file_name);
+            }
+
         } catch (\Exception $e) {
             \Log::info($e);
             return $this->error('invalid');
@@ -236,7 +249,7 @@ class LfmPath
     {
         if (empty($file)) {
             return $this->error('file-empty');
-        } elseif (! $file instanceof UploadedFile) {
+        } elseif (!$file instanceof UploadedFile) {
             return $this->error('instance');
         } elseif ($file->getError() == UPLOAD_ERR_INI_SIZE) {
             return $this->error('file-size', ['max' => ini_get('upload_max_filesize')]);

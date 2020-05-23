@@ -44,8 +44,15 @@ class LfmStorageRepository
     {
         $nameint = strripos($this->path, "/");
         $nameclean = substr($this->path, $nameint + 1);
-        $pathclean = substr_replace($this->path, "", $nameint);
+        $pathclean = $this->getCleanPath($file);
         $this->disk->putFileAs($pathclean, $file, $nameclean, 'public');
+    }
+
+    public function getCleanPath($file)
+    {
+        $nameint = strripos($this->path, "/");
+        $pathclean = substr_replace($this->path, "", $nameint);
+        return $pathclean;
     }
 
     public function url($path)

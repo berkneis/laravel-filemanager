@@ -17,6 +17,10 @@ return [
 
     'use_package_routes'       => true,
 
+    'cloud'                    => env('FILEMANAGER_CLOUD',false),
+
+    'optimizer'                => false,
+
     /*
     |--------------------------------------------------------------------------
     | Shared folder / Private folder
