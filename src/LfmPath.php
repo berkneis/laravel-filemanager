@@ -141,7 +141,6 @@ class LfmPath
         if ($this->storage->exists($this)) {
             return false;
         }
-
         $this->storage->makeDirectory(0777, true, true);
     }
 

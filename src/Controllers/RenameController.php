@@ -2,6 +2,7 @@
 
 namespace UniSharp\LaravelFilemanager\Controllers;
 
+use Illuminate\Support\Facades\Storage;
 use UniSharp\LaravelFilemanager\Events\ImageIsRenaming;
 use UniSharp\LaravelFilemanager\Events\ImageWasRenamed;
 use UniSharp\LaravelFilemanager\Events\FolderIsRenaming;
@@ -26,14 +27,18 @@ class RenameController extends LfmController
             }
         }
 
+        if (is_dir($old_file->path())) {
+            return parent::error('folder-name');
+        }
+
         if (config('lfm.alphanumeric_directory') && preg_match('/[^\w-]/i', $new_name)) {
             return parent::error('folder-alnum');
-        // return parent::error('file-alnum');
+            // return parent::error('file-alnum');
         } elseif ($this->lfm->setName($new_name)->exists()) {
             return parent::error('rename');
         }
 
-        if (! $is_directory) {
+        if (!$is_directory) {
             $extension = $old_file->extension();
             if ($extension) {
                 $new_name = str_replace('.' . $extension, '', $new_name) . '.' . $extension;
@@ -41,6 +46,10 @@ class RenameController extends LfmController
         }
 
         $new_file = $this->lfm->setName($new_name)->path('absolute');
+
+        if ($is_directory) {
+            return false;
+        }
 
         if ($is_directory) {
             event(new FolderIsRenaming($old_file->path(), $new_file));
@@ -51,10 +60,17 @@ class RenameController extends LfmController
         if ($old_file->hasThumb()) {
             $this->lfm->setName($old_name)->thumb()
                 ->move($this->lfm->setName($new_name)->thumb());
+            if ($this->helper->cloudIsEnabled()) {
+                Storage::cloud()->move($this->lfm->setName($old_name)->thumb()->path(), $this->lfm->setName($new_name)->thumb()->path());
+            }
         }
 
         $this->lfm->setName($old_name)
             ->move($this->lfm->setName($new_name));
+
+        if ($this->helper->cloudIsEnabled()) {
+            Storage::cloud()->move($this->lfm->setName($old_name)->path(), $this->lfm->setName($new_name)->path());
+        }
 
         if ($is_directory) {
             event(new FolderWasRenamed($old_file->path(), $new_file));

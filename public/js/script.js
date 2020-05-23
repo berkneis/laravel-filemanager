@@ -208,9 +208,7 @@ function toggleActions() {
     .length === 0;
 
   $('[data-action=use]').toggleClass('d-none', !(many_selected && only_file));
-  $('[data-action=rename]').toggleClass('d-none', !one_selected);
   $('[data-action=preview]').toggleClass('d-none', !(many_selected && only_file));
-  $('[data-action=move]').toggleClass('d-none', !many_selected);
   $('[data-action=download]').toggleClass('d-none', !(many_selected && only_file));
   $('[data-action=resize]').toggleClass('d-none', !(one_selected && only_image));
   $('[data-action=crop]').toggleClass('d-none', !(one_selected && only_image));

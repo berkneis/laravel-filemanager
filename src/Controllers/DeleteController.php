@@ -2,6 +2,7 @@
 
 namespace UniSharp\LaravelFilemanager\Controllers;
 
+use Illuminate\Support\Facades\Storage;
 use UniSharp\LaravelFilemanager\Events\ImageIsDeleting;
 use UniSharp\LaravelFilemanager\Events\ImageWasDeleted;
 
@@ -28,13 +29,13 @@ class DeleteController extends LfmController
                 continue;
             }
 
-            if (! $this->lfm->setName($name_to_delete)->exists()) {
+            if (!$this->lfm->setName($name_to_delete)->exists()) {
                 array_push($errors, parent::error('folder-not-found', ['folder' => $file_path]));
                 continue;
             }
 
             if ($this->lfm->setName($name_to_delete)->isDirectory()) {
-                if (! $this->lfm->setName($name_to_delete)->directoryIsEmpty()) {
+                if (!$this->lfm->setName($name_to_delete)->directoryIsEmpty()) {
                     array_push($errors, parent::error('delete-folder'));
                     continue;
                 }
@@ -45,6 +46,14 @@ class DeleteController extends LfmController
             }
 
             $this->lfm->setName($name_to_delete)->delete();
+
+            if ($this->helper->cloudIsEnabled()) {
+                if (is_dir($this->lfm->setName($name_to_delete)->path())) {
+                    Storage::cloud()->deleteDirectory($this->lfm->setName($name_to_delete)->path());
+                } else {
+                    Storage::cloud()->delete($this->lfm->setName($name_to_delete)->path());
+                }
+            }
 
             event(new ImageWasDeleted($file_path));
         }

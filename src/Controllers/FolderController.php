@@ -2,6 +2,8 @@
 
 namespace UniSharp\LaravelFilemanager\Controllers;
 
+use Illuminate\Support\Facades\Storage;
+
 class FolderController extends LfmController
 {
     /**
@@ -20,11 +22,11 @@ class FolderController extends LfmController
                 'root_folders' => array_map(function ($type) use ($folder_types) {
                     $path = $this->lfm->dir($this->helper->getRootFolder($type));
 
-                    return (object) [
+                    return (object)[
                         'name' => trans('laravel-filemanager::lfm.title-' . $type),
                         'url' => $path->path('working_dir'),
                         'children' => $path->folders(),
-                        'has_next' => ! ($type == end($folder_types)),
+                        'has_next' => !($type == end($folder_types)),
                     ];
                 }, $folder_types),
             ]);
@@ -47,7 +49,9 @@ class FolderController extends LfmController
             } elseif (config('lfm.alphanumeric_directory') && preg_match('/[^\w-]/i', $folder_name)) {
                 return $this->helper->error('folder-alnum');
             } else {
-                $this->lfm->setName($folder_name)->createFolder();
+                if ($this->lfm->setName($folder_name)->createFolder() !== false) {
+                    Storage::cloud()->makeDirectory($this->lfm->setName($folder_name)->path());
+                }
             }
         } catch (\Exception $e) {
             return $e->getMessage();
